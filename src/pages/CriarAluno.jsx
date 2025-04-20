@@ -1,16 +1,16 @@
 import axios from 'axios';
 import EnderecoForm from '../components/EnderecoForm';
 import React, { useState, useEffect } from "react";
-import { useNavigate  } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import { Container, Card, Button, Form, Row, Col } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-const CriarAlunos = () => {
-    const baseUrl = "https://localhost:44338/api/aluno";
-
-    const [data, setData] = useState([]);
+const EditarAlunos = () => {
+    const { id } = useParams();
     const navigate = useNavigate();
+    const baseUrl = `https://localhost:44338/api/aluno/${id}`;
 
-    const [alunoSelecionado, setAlunoSelecionado] = useState({
+    const [aluno, setAluno] = useState({
         idAluno: 0,
         nomeAluno: '',
         cpf: '',
@@ -37,111 +37,41 @@ const CriarAlunos = () => {
         deficienciaEspecificar: '',
         emancipado: true,
         contato: {
-          idContato: 0,
-          telefoneContato: '',
-          emailContato: ''
+            idContato: 0,
+            telefoneContato: '',
+            emailContato: ''
         },
         endereco: {
-          idEndereco: 0,
-          logradouro: '',
-          numero: '',
-          complemento: '',
-          bairro: '',
-          cidade: '',
-          estado: '',
-          cep: ''
-        },
-        idContato: 0,
-        idEndereco: 0 
-      });
-
-    const resetarAlunoSelecionado = () => {
-        setAlunoSelecionado({
-            idAluno: 0,
-            nomeAluno: '',
-            cpf: '',
-            nomeSocial: '',
-            orgaoEmissor: '',
-            ufEmissor: '',
-            rg: '',
-            numeroNisPisPasep: '',
-            numeroSus: '',
-            nomeMae: '',
-            nomePai: '',
-            numeroInep: '',
-            numeroRa: '',
-            datadeNascimento: '',
-            datadeEmissao: '',
-            status: '',
-            sexo: '',
-            estadoCivil: '',
-            etnia: '',
-            transporte: '',
-            tipoTransporte: '',
-            alfabetizado: true,
-            deficiencia: true,
-            deficienciaEspecificar: '',
-            emancipado: true,
-            contato: {
-              idContato: 0,
-              telefoneContato: '',
-              emailContato: ''
-            },
-            endereco: {
-              idEndereco: 0,
-              logradouro: '',
-              numero: '',
-              complemento: '',
-              bairro: '',
-              cidade: '',
-              estado: '',
-              cep: ''
-            },
-            idContato: 0,
-            idEndereco: 0 
-        });
-    };
+            idEndereco: 0,
+            logradouro: '',
+            numero: '',
+            complemento: '',
+            bairro: '',
+            cidade: '',
+            estado: '',
+            cep: ''
+        }
+    });
 
     useEffect(() => {
-        const carregarAlunos = async () => {
+        const carregarAluno = async () => {
             try {
                 const response = await axios.get(baseUrl);
-                setData(response.data);
+                setAluno(response.data);
             } catch (error) {
-                console.error("Erro ao carregar alunos:", error);
+                console.error("Erro ao carregar aluno:", error);
             }
         };
-    
-        carregarAlunos();
-    }, []);
 
-    const requestPost = async () => {
-        const alunoParaEnviar = {
-            ...alunoSelecionado,
-            endereco: { ...alunoSelecionado.endereco },
-            contato: { ...alunoSelecionado.contato }
-        };
-
-        delete alunoParaEnviar.idAluno;
-        console.log("Aluno enviado:", JSON.stringify(alunoParaEnviar, null, 2));
-
-        try {
-            const response = await axios.post(baseUrl, alunoParaEnviar);
-            setData([...data, response.data]);
-            resetarAlunoSelecionado();
-            navigate(`/ver-alunos/${alunoSelecionado.idAluno}`);
-        } catch (error) {
-            console.error("Erro ao cadastrar aluno:", error.response?.data);
-        }
-    };
+        carregarAluno();
+    }, [baseUrl]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
 
         if (name.startsWith('endereco.')) {
             const field = name.split('.')[1];
-    
-            setAlunoSelecionado(prev => ({
+            setAluno(prev => ({
                 ...prev,
                 endereco: {
                     ...prev.endereco,
@@ -150,8 +80,7 @@ const CriarAlunos = () => {
             }));
         } else if (name.startsWith('contato.')) {
             const field = name.split('.')[1];
-    
-            setAlunoSelecionado(prev => ({
+            setAluno(prev => ({
                 ...prev,
                 contato: {
                     ...prev.contato,
@@ -160,199 +89,251 @@ const CriarAlunos = () => {
             }));
         } else {
             const booleanFields = ['emancipado', 'alfabetizado', 'deficiencia'];
-    
-            setAlunoSelecionado(prev => ({
+            setAluno(prev => ({
                 ...prev,
                 [name]: booleanFields.includes(name) ? value === 'true' : value
             }));
         }
     };
 
-    return (
-        <div className='container mt-4'>
-            <h2>Criar Novo Aluno</h2>
-            <div className="form-group">
-                <label>Nome: </label>
-                <input type="text" name="nomeAluno"
-                    value={alunoSelecionado.nomeAluno}
-                    onChange={handleChange}
-                    className="form-control"
-                    placeholder='Nome Completo' />
-                <label>CPF: </label>
-                <input type="text" name="cpf"
-                    value={alunoSelecionado.cpf}
-                    onChange={handleChange}
-                    className="form-control" />
-                <label>Nome Social: </label>
-                <input type="text" name="nomeSocial"
-                    value={alunoSelecionado.nomeSocial}
-                    onChange={handleChange}
-                    className="form-control" />
-                <label>Nome da Mãe: </label>
-                <input type="text" name="nomeMae"
-                    value={alunoSelecionado.nomeMae}
-                    onChange={handleChange}
-                    className="form-control" />
-                <label>Nome do Pai: </label>
-                <input type="text" name="nomePai"
-                    value={alunoSelecionado.nomePai}
-                    onChange={handleChange}
-                    className="form-control" />   
-                <label>Emancipado: </label>
-                <select name="emancipado"
-                    value={alunoSelecionado.emancipado}
-                    onChange={handleChange}
-                    className="form-control">
-                    <option value="">Selecione</option>
-                    <option value={true}>Sim</option>
-                    <option value={false}>Não</option>
-                </select>
-                <label>Alfabetizado: </label>
-                <select name="alfabetizado"
-                    value={alunoSelecionado.alfabetizado}
-                    onChange={handleChange}
-                    className="form-control">
-                    <option value="">Selecione</option>
-                    <option value={true}>Sim</option>
-                    <option value={false}>Não</option>
-                </select>
-                <label>Deficiência: </label>
-                <select name="deficiencia"
-                    value={alunoSelecionado.deficiencia}
-                    onChange={handleChange}
-                    className="form-control">
-                    <option value="">Selecione</option>
-                    <option value={true}>Sim</option>
-                    <option value={false}>Não</option>
-                </select>
-                <label>Especifique Deficiência: </label>
-                <input type="text" name="deficienciaEspecificar"
-                    value={alunoSelecionado.deficienciaEspecificar}
-                    onChange={handleChange}
-                    className="form-control" 
-                    rows={4}/>                                     
-                <label>Sexo: </label>
-                <select name="sexo" value={alunoSelecionado.sexo} onChange={handleChange} className="form-control">
-                    <option value="">Selecione</option>
-                    <option value="Masculino">Masculino</option>
-                    <option value="Feminino">Feminino</option>
-                    <option value="Outro">Outro</option>
-                </select>
-                <label>Estado Civil: </label>
-                <select name="estadoCivil" value={alunoSelecionado.estadoCivil} onChange={handleChange} className="form-control">
-                    <option value="">Selecione</option>
-                    <option value="Solteiro">Solteiro</option>
-                    <option value="Casado">Casado</option>
-                    <option value="Divorciado">Divorciado</option>
-                    <option value="Viuvo">Viúvo</option>
-                    <option value="Outro">Outro</option>
-                </select>
-                <label>Data de Nascimento: </label>
-                <input type="date" name="datadeNascimento"
-                    value={alunoSelecionado.datadeNascimento}
-                    onChange={handleChange}
-                    className="form-control" />
-                <label>Status: </label>
-                <select name="status" value={alunoSelecionado.status} onChange={handleChange} className='form-control'>
-                    <option value="">Selecione</option>
-                    <option value="Ativo">Ativo</option>
-                    <option value="Inativo">Inativo</option>
-                    <option value="Transferido">Transferido</option>
-                    <option value="Falecido">Falecido</option>
-                </select>
-                <label>Código INEP: </label>
-                <input type="text" name="numeroInep"
-                    value={alunoSelecionado.numeroInep}
-                    onChange={handleChange}
-                    className="form-control" />
-                <label>Código Estadual: </label>
-                <input type="text" name="numeroRa"
-                    value={alunoSelecionado.numeroRa}
-                    onChange={handleChange}
-                    className="form-control" />
-                <label>RG: </label>
-                <input type="text" name="rg"
-                    value={alunoSelecionado.rg}
-                    onChange={handleChange}
-                    className="form-control" />
-                <label>Órgão Emissor: </label>
-                <input type="text" name="orgaoEmissor"
-                    value={alunoSelecionado.orgaoEmissor}
-                    onChange={handleChange}
-                    className="form-control" />
-                 <label>UF Emissor: </label>
-                <input type="text" name="ufEmissor"
-                    value={alunoSelecionado.ufEmissor}
-                    onChange={handleChange}
-                    className="form-control" />                   
-                <label>Data de Emissão: </label>
-                <input type="date" name="datadeEmissao"
-                    value={alunoSelecionado.datadeEmissao}
-                    onChange={handleChange}
-                    className="form-control" />
-                <label>Número do NIS (PIS/PASEP): </label>
-                <input type="text" name="numeroNisPisPasep"
-                    value={alunoSelecionado.numeroNisPisPasep}
-                    onChange={handleChange}
-                    className="form-control" />
-                <label>Número do SUS: </label>
-                <input type="text" name="numeroSus"
-                    value={alunoSelecionado.numeroSus}
-                    onChange={handleChange}
-                    className="form-control" />
-                <label>Etnia: </label>
-                <select name="etnia" value={alunoSelecionado.etnia} onChange={handleChange} className="form-control">
-                    <option value="">Selecione</option>
-                    <option value="Branca">Branca</option>
-                    <option value="Preta">Preta</option>
-                    <option value="Parda">Parda</option>
-                    <option value="Amarela">Amarela</option>
-                    <option value="Indigena">Indígena</option>
-                    <option value="Outro">Outro</option>
-                </select>
-                <hr />
-                <EnderecoForm
-                    endereco={alunoSelecionado.endereco}
-                    onChange={handleChange}
-                />
-                <hr />
-                <h5>Transporte</h5>
-                <label>Transporte: </label>
-                <select name="transporte" value={alunoSelecionado.transporte} onChange={handleChange} className='form-control'>
-                    <option value="">Selecione</option>
-                    <option value="NaoUtiliza">Não Utiliza</option>
-                    <option value="Municipal">Municipal</option>
-                    <option value="Estadual">Estadual</option>
-                </select>
-                <label>Tipo de transporte: </label>
-                <select name="tipoTransporte" value={alunoSelecionado.tipoTransporte} onChange={handleChange} className="form-control">
-                    <option value="">Selecione</option>
-                    <option value="RodoviarioVanKombi">Rodoviário Van/Kombi</option>
-                    <option value="RodoviarioOnibus">Rodoviário Ônibus</option>
-                    <option value="RodoviarioMicro">Rodoviário Microônibus</option>
-                    <option value="RodoviarioBicicleta">Rodoviário Bicicleta</option>
-                    <option value="RodoviarioTracaoAnimal">Rodoviário Tração Animal</option>
-                    <option value="RodoviarioOutro">Rodoviário Outro</option>
-                    <option value="Aquaviario">Aquaviário</option>
-                </select>                
-                <hr />
-                <h5>Contato</h5>
-                <input type="text" name="telefone"
-                    value={alunoSelecionado.contato.telefoneContato}
-                    onChange={handleChange}
-                    className="form-control"
-                    placeholder="Telefone" />
-                <input type="text" name="email"
-                    value={alunoSelecionado.contato.email}
-                    onChange={handleChange}
-                    className="form-control"
-                    placeholder="Email" />
-                <hr />
-            </div>
-            <button className="btn btn-success" onClick={requestPost}>Salvar</button>
-            <button className="btn btn-secondary" onClick={() => navigate("/buscar-alunos")}>Cancelar</button>
-        </div>
-    );
-}
+    const handleDataChange = (e) => {
+        let { name, value } = e.target;
+        let rawValue = value.replace(/\D/g, "");
+        if (rawValue.length > 8) rawValue = rawValue.slice(0, 8);
 
-export default CriarAlunos;
+        let formatted = rawValue;
+        if (rawValue.length >= 5) {
+            formatted = `${rawValue.slice(0, 2)}/${rawValue.slice(2, 4)}/${rawValue.slice(4)}`;
+        } else if (rawValue.length >= 3) {
+            formatted = `${rawValue.slice(0, 2)}/${rawValue.slice(2)}`;
+        }
+
+        setAluno(prev => ({ ...prev, [name]: formatted }));
+    };
+
+    const handleCpfChange = (e) => {
+        let rawValue = e.target.value.replace(/\D/g, "");
+        if (rawValue.length > 11) rawValue = rawValue.slice(0, 11);
+
+        let formatted = rawValue;
+        if (rawValue.length > 9) {
+            formatted = `${rawValue.slice(0, 3)}.${rawValue.slice(3, 6)}.${rawValue.slice(6, 9)}-${rawValue.slice(9)}`;
+        } else if (rawValue.length > 6) {
+            formatted = `${rawValue.slice(0, 3)}.${rawValue.slice(3, 6)}.${rawValue.slice(6)}`;
+        } else if (rawValue.length > 3) {
+            formatted = `${rawValue.slice(0, 3)}.${rawValue.slice(3)}`;
+        }
+
+        setAluno(prev => ({ ...prev, cpf: formatted }));
+    };
+
+    const handleTelefoneChange = (e) => {
+        let value = e.target.value.replace(/\D/g, "");
+        if (value.length > 11) value = value.slice(0, 11);
+
+        let formatted = value;
+        if (value.length >= 11) {
+            formatted = `(${value.slice(0, 2)})${value.slice(2, 7)}-${value.slice(7)}`;
+        } else if (value.length >= 7) {
+            formatted = `(${value.slice(0, 2)})${value.slice(2, 6)}-${value.slice(6)}`;
+        } else if (value.length >= 3) {
+            formatted = `(${value.slice(0, 2)})${value.slice(2)}`;
+        } else if (value.length > 1) {
+            formatted = `(${value}`;
+        }
+
+        setAluno(prev => ({
+            ...prev,
+            contato: {
+                ...prev.contato,
+                telefoneContato: formatted
+            }
+        }));
+    };
+
+    const handleCepChange = (e) => {
+        let rawValue = e.target.value.replace(/\D/g, "");
+        if (rawValue.length > 8) rawValue = rawValue.slice(0, 8);
+
+        let formatted = rawValue;
+        if (rawValue.length > 5) {
+            formatted = `${rawValue.slice(0, 5)}-${rawValue.slice(5)}`;
+        }
+
+        setAluno(prev => ({
+            ...prev,
+            endereco: {
+                ...prev.endereco,
+                cep: formatted
+            }
+        }));
+    };
+
+    const requestPut = async () => {
+        try {
+            await axios.put(baseUrl, aluno);
+            navigate(`/ver-alunos/${id}`);
+        } catch (error) {
+            console.error("Erro ao atualizar aluno:", error.response?.data);
+        }
+    };
+
+    return (
+        <Container className="my-4">
+            <h2 className="mb-4">Editar Aluno</h2>
+
+            {/* DADOS PESSOAIS */}
+            <Card className="mb-4">
+                <Card.Header>Dados Pessoais</Card.Header>
+                <Card.Body>
+                    <Row>
+                        <Col md={6}>
+                            <Form.Group>
+                                <Form.Label>Nome Completo</Form.Label>
+                                <Form.Control type="text" name="nomeAluno" value={aluno.nomeAluno} onChange={handleChange} />
+                            </Form.Group>
+                        </Col>
+                        <Col md={6}>
+                            <Form.Group>
+                                <Form.Label>Nome Social</Form.Label>
+                                <Form.Control type="text" name="nomeSocial" value={aluno.nomeSocial} onChange={handleChange} />
+                            </Form.Group>
+                        </Col>
+                    </Row>
+
+                    <Row className="mt-3">
+                        <Col md={4}>
+                            <Form.Group>
+                                <Form.Label>CPF</Form.Label>
+                                <Form.Control type="text" name="cpf" value={aluno.cpf} onChange={handleCpfChange} />
+                            </Form.Group>
+                        </Col>
+                        <Col md={4}>
+                            <Form.Group>
+                                <Form.Label>Data de Nascimento</Form.Label>
+                                <Form.Control type="text" name="datadeNascimento" value={aluno.datadeNascimento} onChange={handleDataChange} />
+                            </Form.Group>
+                        </Col>
+                        <Col md={4}>
+                            <Form.Group>
+                                <Form.Label>Sexo</Form.Label>
+                                <Form.Select name="sexo" value={aluno.sexo} onChange={handleChange}>
+                                    <option value="">Selecione</option>
+                                    <option value="Masculino">Masculino</option>
+                                    <option value="Feminino">Feminino</option>
+                                    <option value="Outro">Outro</option>
+                                </Form.Select>
+                            </Form.Group>
+                        </Col>
+                    </Row>
+                </Card.Body>
+            </Card>
+
+            {/* DOCUMENTOS */}
+            <Card className="mb-4">
+                <Card.Header>Documentos</Card.Header>
+                <Card.Body>
+                    <Row>
+                        <Col md={4}>
+                            <Form.Group>
+                                <Form.Label>RG</Form.Label>
+                                <Form.Control type="text" name="rg" value={aluno.rg} onChange={handleChange} />
+                            </Form.Group>
+                        </Col>
+                        <Col md={4}>
+                            <Form.Group>
+                                <Form.Label>Órgão Emissor</Form.Label>
+                                <Form.Control type="text" name="orgaoEmissor" value={aluno.orgaoEmissor} onChange={handleChange} />
+                            </Form.Group>
+                        </Col>
+                        <Col md={4}>
+                            <Form.Group>
+                                <Form.Label>UF Emissor</Form.Label>
+                                <Form.Control type="text" name="ufEmissor" value={aluno.ufEmissor} onChange={handleChange} />
+                            </Form.Group>
+                        </Col>
+                    </Row>
+                </Card.Body>
+            </Card>
+
+            {/* ENDEREÇO */}
+            <EnderecoForm
+                endereco={aluno.endereco}
+                handleChange={handleChange}
+                handleCepChange={handleCepChange}
+            />
+
+            {/* CONTATO */}
+            <Card className="mb-4">
+                <Card.Header>Contato</Card.Header>
+                <Card.Body>
+                    <Row>
+                        <Col md={6}>
+                            <Form.Group>
+                                <Form.Label>Telefone</Form.Label>
+                                <Form.Control
+                                    type="text"
+                                    name="contato.telefoneContato"
+                                    value={aluno.contato.telefoneContato}
+                                    onChange={handleTelefoneChange}
+                                />
+                            </Form.Group>
+                        </Col>
+                        <Col md={6}>
+                            <Form.Group>
+                                <Form.Label>Email</Form.Label>
+                                <Form.Control
+                                    type="email"
+                                    name="contato.emailContato"
+                                    value={aluno.contato.emailContato}
+                                    onChange={handleChange}
+                                />
+                            </Form.Group>
+                        </Col>
+                    </Row>
+                </Card.Body>
+            </Card>
+
+            <Card className="mb-4">
+                <Card.Header>Transporte</Card.Header>
+                <Card.Body>
+                    <Row>
+                        <Col md={6}>
+                            <Form.Group>
+                                <Form.Label>Utiliza Transporte?</Form.Label>
+                                <Form.Control
+                                    as="select"
+                                    name="transporte"
+                                    value={aluno.transporte}
+                                    onChange={handleChange}
+                                >
+                                    <option value="">Selecione</option>
+                                    <option value="Sim">Sim</option>
+                                    <option value="Não">Não</option>
+                                </Form.Control>
+                            </Form.Group>
+                        </Col>
+                        <Col md={6}>
+                            <Form.Group>
+                                <Form.Label>Tipo de Transporte</Form.Label>
+                                <Form.Control
+                                    type="text"
+                                    name="tipoTransporte"
+                                    value={aluno.tipoTransporte}
+                                    onChange={handleChange}
+                                />
+                            </Form.Group>
+                        </Col>
+                    </Row>
+                </Card.Body>
+            </Card>
+
+            <div className="d-flex justify-content-end gap-2 mt-3">
+                <Button variant="secondary" onClick={() => navigate("/buscar-alunos")}>Cancelar</Button>
+                <Button variant="success" onClick={requestPut}>Salvar Alterações</Button>
+            </div>
+        </Container>
+    );
+};
+
+export default EditarAlunos;

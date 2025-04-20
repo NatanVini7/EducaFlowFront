@@ -1,4 +1,5 @@
 import { Link, Outlet } from 'react-router-dom';
+import '../styles/SideTopbar.css';
 
 const SideTopbar = () => {
   return (
@@ -66,9 +67,19 @@ const SideTopbar = () => {
           </div>
         </div>
 
-        {/* Conteúdo das páginas */}
-        <div className="col p-4">
-          <Outlet />
+        <div className="col p-0">
+          {/* Topbar */}
+          <div className="topbar d-flex justify-content-end align-items-center p-3 bg-light sticky-top">
+            <Link to="/" className="d-flex align-items-center text-decoration-none text-dark">
+              <span className="fs-5 me-2">Governo de Frei Paulo</span>
+              <img src="/logoFreiPaulo.png" alt="Logo" className="topbar-logo" />
+            </Link>
+          </div>
+
+          {/* Content */}
+          <div className="content p-4">
+            <Outlet />
+          </div>
         </div>
       </div>
     </div>
