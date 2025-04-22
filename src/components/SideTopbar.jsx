@@ -34,9 +34,9 @@ const SideTopbar = () => {
                 </Link>
               </li>
               <li className="nav-item w-100">
-                <Link to="#" className="nav-link text-dark d-flex align-items-center">
+                <Link to="/buscar-escolas" className="nav-link text-dark d-flex align-items-center">
                   <i className="bi-heart fs-4 me-2"></i>
-                  <span className="d-none d-sm-inline">Favoritos</span>
+                  <span className="d-none d-sm-inline">Escolas</span>
                 </Link>
               </li>
               <li className="nav-item w-100">
