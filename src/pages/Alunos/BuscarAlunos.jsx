@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import axios from 'axios';
 import { useNavigate } from "react-router-dom";
-import '../styles/BuscarAlunos.css';
+import './BuscarAlunos.css';
 
 const BuscarAlunos = () => {
   const baseUrl = "https://localhost:44338/api/aluno";

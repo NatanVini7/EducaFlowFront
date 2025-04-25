@@ -1,5 +1,5 @@
 import { Link, Outlet } from 'react-router-dom';
-import '../styles/SideTopbar.css';
+import './SideTopbar.css';
 
 const SideTopbar = () => {
   return (
@@ -28,9 +28,9 @@ const SideTopbar = () => {
                 </Link>
               </li>
               <li className="nav-item w-100">
-                <Link to="#" className="nav-link text-dark d-flex align-items-center">
+                <Link to="/buscar-cursos" className="nav-link text-dark d-flex align-items-center">
                   <i className="bi-table fs-4 me-2"></i>
-                  <span className="d-none d-sm-inline">Tabelas</span>
+                  <span className="d-none d-sm-inline">Cursos</span>
                 </Link>
               </li>
               <li className="nav-item w-100">

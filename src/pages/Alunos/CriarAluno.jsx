@@ -1,18 +1,17 @@
 import axios from 'axios';
-import EnderecoForm from '../components/EnderecoForm';
+import EnderecoForm from '../../components/EnderecoForm';
 import React, { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Container, Card, Button, Form, Row, Col } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { Modal, ModalBody, ModalFooter } from 'reactstrap';
 
-const EditarAlunos = () => {
-    const { id } = useParams();
+const CriarAlunos = () => {
+    const baseUrl = "https://localhost:44338/api/aluno";
     const navigate = useNavigate();
-    const baseUrl = `https://localhost:44338/api/aluno/${id}`;
-    const [modalExcluir, setModalExcluir] = useState(false);
 
-    const [aluno, setAluno] = useState({
+    const [data, setData] = useState([]);
+
+    const [alunoSelecionado, setAlunoSelecionado] = useState({
         idAluno: 0,
         nomeAluno: '',
         cpf: '',
@@ -56,24 +55,24 @@ const EditarAlunos = () => {
     });
 
     useEffect(() => {
-        const carregarAluno = async () => {
+        const carregarAlunos = async () => {
             try {
                 const response = await axios.get(baseUrl);
-                setAluno(response.data);
+                setData(response.data);
             } catch (error) {
-                console.error("Erro ao carregar aluno:", error);
+                console.error("Erro ao carregar alunos:", error);
             }
         };
 
-        carregarAluno();
-    }, [baseUrl]);
+        carregarAlunos();
+    }, []);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
 
         if (name.startsWith('endereco.')) {
             const field = name.split('.')[1];
-            setAluno(prev => ({
+            setAlunoSelecionado(prev => ({
                 ...prev,
                 endereco: {
                     ...prev.endereco,
@@ -82,7 +81,7 @@ const EditarAlunos = () => {
             }));
         } else if (name.startsWith('contato.')) {
             const field = name.split('.')[1];
-            setAluno(prev => ({
+            setAlunoSelecionado(prev => ({
                 ...prev,
                 contato: {
                     ...prev.contato,
@@ -91,78 +90,42 @@ const EditarAlunos = () => {
             }));
         } else {
             const booleanFields = ['emancipado', 'alfabetizado', 'deficiencia'];
-            setAluno(prev => ({
+            setAlunoSelecionado(prev => ({
                 ...prev,
                 [name]: booleanFields.includes(name) ? value === 'true' : value
             }));
         }
     };
 
-    const handleDataChange = (e) => {
-        let { name, value } = e.target;
-        let rawValue = value.replace(/\D/g, "");
-        if (rawValue.length > 8) rawValue = rawValue.slice(0, 8);
+    const requestPost = async () => {
+        const alunoParaEnviar = {
+            ...alunoSelecionado,
+            endereco: { ...alunoSelecionado.endereco },
+            contato: { ...alunoSelecionado.contato }
+        };
 
-        let formatted = rawValue;
-        if (rawValue.length >= 5) {
-            formatted = `${rawValue.slice(0, 2)}/${rawValue.slice(2, 4)}/${rawValue.slice(4)}`;
-        } else if (rawValue.length >= 3) {
-            formatted = `${rawValue.slice(0, 2)}/${rawValue.slice(2)}`;
+        delete alunoParaEnviar.idAluno;
+
+        try {
+            const response = await axios.post(baseUrl, alunoParaEnviar);
+            setData([...data, response.data]);
+            navigate(`/ver-alunos/${response.data.idAluno}`);
+        } catch (error) {
+            console.error("Erro ao cadastrar aluno:", error.response?.data);
         }
-
-        setAluno(prev => ({ ...prev, [name]: formatted }));
-    };
-
-    const handleCpfChange = (e) => {
-        let rawValue = e.target.value.replace(/\D/g, "");
-        if (rawValue.length > 11) rawValue = rawValue.slice(0, 11);
-
-        let formatted = rawValue;
-        if (rawValue.length > 9) {
-            formatted = `${rawValue.slice(0, 3)}.${rawValue.slice(3, 6)}.${rawValue.slice(6, 9)}-${rawValue.slice(9)}`;
-        } else if (rawValue.length > 6) {
-            formatted = `${rawValue.slice(0, 3)}.${rawValue.slice(3, 6)}.${rawValue.slice(6)}`;
-        } else if (rawValue.length > 3) {
-            formatted = `${rawValue.slice(0, 3)}.${rawValue.slice(3)}`;
-        }
-
-        setAluno(prev => ({ ...prev, cpf: formatted }));
-    };
-
-    const handleTelefoneChange = (e) => {
-        let value = e.target.value.replace(/\D/g, "");
-        if (value.length > 11) value = value.slice(0, 11);
-
-        let formatted = value;
-        if (value.length >= 11) {
-            formatted = `(${value.slice(0, 2)})${value.slice(2, 7)}-${value.slice(7)}`;
-        } else if (value.length >= 7) {
-            formatted = `(${value.slice(0, 2)})${value.slice(2, 6)}-${value.slice(6)}`;
-        } else if (value.length >= 3) {
-            formatted = `(${value.slice(0, 2)})${value.slice(2)}`;
-        } else if (value.length > 1) {
-            formatted = `(${value}`;
-        }
-
-        setAluno(prev => ({
-            ...prev,
-            contato: {
-                ...prev.contato,
-                telefoneContato: formatted
-            }
-        }));
     };
 
     const handleCepChange = (e) => {
-        let rawValue = e.target.value.replace(/\D/g, "");
+        let rawValue = e.target.value.replace(/\D/g, ""); // remove tudo que não for número
+    
         if (rawValue.length > 8) rawValue = rawValue.slice(0, 8);
-
+    
         let formatted = rawValue;
         if (rawValue.length > 5) {
             formatted = `${rawValue.slice(0, 5)}-${rawValue.slice(5)}`;
         }
 
-        setAluno(prev => ({
+        setAlunoSelecionado(prev => ({
             ...prev,
             endereco: {
                 ...prev.endereco,
@@ -171,31 +134,72 @@ const EditarAlunos = () => {
         }));
     };
 
-    const requestPut = async () => {
-        try {
-            await axios.put(baseUrl, aluno);
-            navigate(`/ver-alunos/${id}`);
-        } catch (error) {
-            console.error("Erro ao atualizar aluno:", error.response?.data);
+    const handleDataChange = (e) => {
+        let { name, value } = e.target;
+        let rawValue = value.replace(/\D/g, "");
+      
+        if (rawValue.length > 8) rawValue = rawValue.slice(0, 8);
+      
+        let formatted = rawValue;
+        if (rawValue.length >= 5) {
+          formatted = `${rawValue.slice(0, 2)}/${rawValue.slice(2, 4)}/${rawValue.slice(4)}`;
+        } else if (rawValue.length >= 3) {
+          formatted = `${rawValue.slice(0, 2)}/${rawValue.slice(2)}`;
         }
-    };
-
-    const requestDelete = async () => {
-        try {
-          await axios.delete(`${baseUrl}/${aluno.idAluno}`);
-          abrirFecharModalExcluir();
-          navigate("/buscar-alunos");
-        } catch (error) {
-          console.error("Erro ao excluir aluno:", error);
-        }
+      
+        setAlunoSelecionado(prev => ({
+            ...prev,
+            [name]: formatted}
+        ));
       };
-    
-      const abrirFecharModalExcluir = () =>
-        setModalExcluir(!modalExcluir);
 
+      const handleCpfChange = (e) => {
+        let rawValue = e.target.value.replace(/\D/g, ""); // remove tudo que não for número
+
+        if (rawValue.length > 11) rawValue = rawValue.slice(0, 11);
+
+        let formatted = rawValue;
+        if (rawValue.length > 9) {
+            formatted = `${rawValue.slice(0, 3)}.${rawValue.slice(3, 6)}.${rawValue.slice(6, 9)}-${rawValue.slice(9, 11)}`;
+        } else if (rawValue.length > 6) {
+            formatted = `${rawValue.slice(0, 3)}.${rawValue.slice(3, 6)}.${rawValue.slice(6)}`;
+        } else if (rawValue.length > 3) {
+            formatted = `${rawValue.slice(0, 3)}.${rawValue.slice(3)}`;
+        }
+    
+        setAlunoSelecionado(prev => ({
+            ...prev,
+            cpf: formatted
+        }));
+      }
+
+      const handleTelefoneChange = (e) => {
+        let value = e.target.value.replace(/\D/g, ""); // remove tudo que não for número
+      
+        if (value.length > 11) value = value.slice(0, 11);
+      
+        let formatted = value;
+        if (value.length >= 11) {
+          formatted = `(${value.slice(0, 2)})${value.slice(2, 7)}-${value.slice(7)}`;
+        } else if (value.length >= 7) {
+          formatted = `(${value.slice(0, 2)})${value.slice(2, 6)}-${value.slice(6)}`;
+        } else if (value.length >= 3) {
+            formatted = `(${value.slice(0, 2)})${value.slice(2)}`;
+        } else if (value.length > 1) {
+            formatted = `(${value}`;
+        }
+      
+        setAlunoSelecionado(prev => ({ 
+            ...prev,
+            contato: {
+                ...prev.contato,
+                telefoneContato: formatted 
+            }
+        }));
+      };
     return (
         <Container className="my-4">
-            <h2 className="mb-4">Editar Aluno</h2>
+            <h2 className="mb-4">Cadastro de Aluno</h2>
 
             <Card className="mb-4">
                 <Card.Header>Dados Pessoais</Card.Header>
@@ -206,7 +210,7 @@ const EditarAlunos = () => {
                                 <Form.Label>Nome Completo</Form.Label>
                                 <Form.Control 
                                     name="nomeAluno" 
-                                    value={aluno.nomeAluno} 
+                                    value={alunoSelecionado.nomeAluno} 
                                     onChange={handleChange} 
                                 />
                             </Form.Group>
@@ -214,7 +218,7 @@ const EditarAlunos = () => {
                         <Col md={3}>
                             <Form.Group className="mb-3">
                                 <Form.Label>Sexo</Form.Label>
-                                <Form.Select name="sexo" value={aluno.sexo} onChange={handleChange}>
+                                <Form.Select name="sexo" value={alunoSelecionado.sexo} onChange={handleChange}>
                                     <option value="">Selecione</option>
                                     <option value="Masculino">Masculino</option>
                                     <option value="Feminino">Feminino</option>
@@ -228,7 +232,7 @@ const EditarAlunos = () => {
                                 <Form.Control 
                                     type="text" 
                                     name="datadeNascimento" 
-                                    value={aluno.datadeNascimento} 
+                                    value={alunoSelecionado.datadeNascimento} 
                                     onChange={handleDataChange} 
                                     placeholder='dd/mm/aaaa'
                                 />
@@ -241,7 +245,7 @@ const EditarAlunos = () => {
                                 <Form.Label>Nome da Mãe</Form.Label>
                                 <Form.Control 
                                     name="nomeMae" 
-                                    value={aluno.nomeMae} 
+                                    value={alunoSelecionado.nomeMae} 
                                     onChange={handleChange} 
                                 />
                             </Form.Group>
@@ -251,7 +255,7 @@ const EditarAlunos = () => {
                                 <Form.Label>Nome do Pai</Form.Label>
                                 <Form.Control 
                                     name="nomePai" 
-                                    value={aluno.nomePai} 
+                                    value={alunoSelecionado.nomePai} 
                                     onChange={handleChange} 
                                 />
                             </Form.Group>
@@ -261,7 +265,7 @@ const EditarAlunos = () => {
                         <Col md={4}>
                             <Form.Group className="mb-3">
                                 <Form.Label>Emancipado</Form.Label>
-                                <Form.Select name="emancipado" value={aluno.emancipado} onChange={handleChange}>
+                                <Form.Select name="emancipado" value={alunoSelecionado.emancipado} onChange={handleChange}>
                                     <option value="">Selecione</option>
                                     <option value="true">Sim</option>
                                     <option value="false">Não</option>
@@ -271,7 +275,7 @@ const EditarAlunos = () => {
                         <Col md={4}>
                             <Form.Group className="mb-3">
                                 <Form.Label>Alfabetizado</Form.Label>
-                                <Form.Select name="alfabetizado" value={aluno.alfabetizado} onChange={handleChange}>
+                                <Form.Select name="alfabetizado" value={alunoSelecionado.alfabetizado} onChange={handleChange}>
                                     <option value="">Selecione</option>
                                     <option value="true">Sim</option>
                                     <option value="false">Não</option>
@@ -281,7 +285,7 @@ const EditarAlunos = () => {
                         <Col md={4}>
                             <Form.Group className="mb-3">
                                 <Form.Label>Deficiência</Form.Label>
-                                <Form.Select name="deficiencia" value={aluno.deficiencia} onChange={handleChange}>
+                                <Form.Select name="deficiencia" value={alunoSelecionado.deficiencia} onChange={handleChange}>
                                     <option value="">Selecione</option>
                                     <option value="true">Sim</option>
                                     <option value="false">Não</option>
@@ -289,12 +293,12 @@ const EditarAlunos = () => {
                             </Form.Group>
                         </Col>
                     </Row>
-                    {aluno.deficiencia === true && (
+                    {alunoSelecionado.deficiencia === true && (
                         <Form.Group className="mb-3">
                             <Form.Label>Especifique a Deficiência</Form.Label>
                             <Form.Control 
                                 name="deficienciaEspecificar" 
-                                value={aluno.deficienciaEspecificar} 
+                                value={alunoSelecionado.deficienciaEspecificar} 
                                 onChange={handleChange} 
                             />
                         </Form.Group>
@@ -310,7 +314,7 @@ const EditarAlunos = () => {
                             <Form.Label>CPF</Form.Label>
                             <Form.Control
                                 name="cpf"
-                                value={aluno.cpf} 
+                                value={alunoSelecionado.cpf} 
                                 onChange={handleCpfChange} 
                                 placeholder='000.000.000-00'
                             />
@@ -319,7 +323,7 @@ const EditarAlunos = () => {
                             <Form.Label>Nome Social</Form.Label>
                             <Form.Control 
                                 name="nomeSocial" 
-                                value={aluno.nomeSocial} 
+                                value={alunoSelecionado.nomeSocial} 
                                 onChange={handleChange} 
                             />
                         </Col>
@@ -327,7 +331,7 @@ const EditarAlunos = () => {
                             <Form.Label>RG</Form.Label>
                             <Form.Control 
                                 name="rg" 
-                                value={aluno.rg} 
+                                value={alunoSelecionado.rg} 
                                 onChange={handleChange} 
                             />
                         </Col>
@@ -337,7 +341,7 @@ const EditarAlunos = () => {
                             <Form.Label>Órgão Emissor</Form.Label>
                             <Form.Control 
                                 name="orgaoEmissor" 
-                                value={aluno.orgaoEmissor} 
+                                value={alunoSelecionado.orgaoEmissor} 
                                 onChange={handleChange} 
                             />
                         </Col>
@@ -345,7 +349,7 @@ const EditarAlunos = () => {
                             <Form.Label>UF Emissor</Form.Label>
                             <Form.Control 
                                 name="ufEmissor" 
-                                value={aluno.ufEmissor} 
+                                value={alunoSelecionado.ufEmissor} 
                                 onChange={handleChange} 
                             />
                         </Col>
@@ -354,7 +358,7 @@ const EditarAlunos = () => {
                             <Form.Control 
                                 type="text" 
                                 name="datadeEmissao" 
-                                value={aluno.datadeEmissao} 
+                                value={alunoSelecionado.datadeEmissao} 
                                 onChange={handleDataChange} 
                                 placeholder='dd/mm/aaaa'
                             />
@@ -363,73 +367,59 @@ const EditarAlunos = () => {
                 </Card.Body>
             </Card>
 
-
-            <EnderecoForm
-                endereco={aluno.endereco}
-                handleChange={handleChange}
-                handleCepChange={handleCepChange}
-            />
+            <EnderecoForm endereco={alunoSelecionado.endereco} onChange={handleChange} onCepChange={handleCepChange} />
 
             <Card className="mb-4">
                 <Card.Header>Contato</Card.Header>
                 <Card.Body>
                     <Row>
                         <Col md={6}>
-                            <Form.Group>
-                                <Form.Label>Telefone</Form.Label>
-                                <Form.Control
-                                    type="text"
-                                    name="contato.telefoneContato"
-                                    value={aluno.contato.telefoneContato}
-                                    onChange={handleTelefoneChange}
-                                />
-                            </Form.Group>
+                            <Form.Label>Telefone</Form.Label>
+                            <Form.Control 
+                                name="contato.telefoneContato" 
+                                value={alunoSelecionado.contato.telefoneContato} 
+                                onChange={handleTelefoneChange}
+                                placeholder='(00)0000-0000' 
+                            />
                         </Col>
                         <Col md={6}>
-                            <Form.Group>
-                                <Form.Label>Email</Form.Label>
-                                <Form.Control
-                                    type="email"
-                                    name="contato.emailContato"
-                                    value={aluno.contato.emailContato}
-                                    onChange={handleChange}
-                                />
-                            </Form.Group>
+                            <Form.Label>Email</Form.Label>
+                            <Form.Control 
+                                name="contato.emailContato" 
+                                value={alunoSelecionado.contato.emailContato} 
+                                onChange={handleChange} 
+                                placeholder='seuemail@email.com'
+                        />
                         </Col>
                     </Row>
                 </Card.Body>
             </Card>
 
-            {/* TRANSPORTE */}
             <Card className="mb-4">
                 <Card.Header>Transporte</Card.Header>
                 <Card.Body>
                     <Row>
                         <Col md={6}>
-                            <Form.Group>
-                                <Form.Label>Utiliza Transporte?</Form.Label>
-                                <Form.Control
-                                    as="select"
-                                    name="transporte"
-                                    value={aluno.transporte}
-                                    onChange={handleChange}
-                                >
-                                    <option value="">Selecione</option>
-                                    <option value="Sim">Sim</option>
-                                    <option value="Não">Não</option>
-                                </Form.Control>
-                            </Form.Group>
+                            <Form.Label>Transporte</Form.Label>
+                            <Form.Select name="transporte" value={alunoSelecionado.transporte} onChange={handleChange}>
+                                <option value="">Selecione</option>
+                                <option value="NaoUtiliza">Não Utiliza</option>
+                                <option value="Municipal">Municipal</option>
+                                <option value="Estadual">Estadual</option>
+                            </Form.Select>
                         </Col>
                         <Col md={6}>
-                            <Form.Group>
-                                <Form.Label>Tipo de Transporte</Form.Label>
-                                <Form.Control
-                                    type="text"
-                                    name="tipoTransporte"
-                                    value={aluno.tipoTransporte}
-                                    onChange={handleChange}
-                                />
-                            </Form.Group>
+                            <Form.Label>Tipo de Transporte</Form.Label>
+                            <Form.Select name="tipoTransporte" value={alunoSelecionado.tipoTransporte} onChange={handleChange}>
+                                <option value="">Selecione</option>
+                                <option value="RodoviarioVanKombi">Van/Kombi</option>
+                                <option value="RodoviarioOnibus">Ônibus</option>
+                                <option value="RodoviarioMicro">Microônibus</option>
+                                <option value="RodoviarioBicicleta">Bicicleta</option>
+                                <option value="RodoviarioTracaoAnimal">Tração Animal</option>
+                                <option value="RodoviarioOutro">Outro</option>
+                                <option value="Aquaviario">Aquaviário</option>
+                            </Form.Select>
                         </Col>
                     </Row>
                 </Card.Body>
@@ -437,19 +427,10 @@ const EditarAlunos = () => {
 
             <div className="d-flex justify-content-end gap-2 mt-3">
                 <Button variant="secondary" onClick={() => navigate("/buscar-alunos")}>Cancelar</Button>
-                <Button className="btn btn-danger" onClick={abrirFecharModalExcluir}>Excluir</Button>
-                <Button variant="success" onClick={requestPut}>Salvar Alterações</Button>
+                <Button variant="success" onClick={requestPost}>Salvar</Button>
             </div>
-            <Modal isOpen={modalExcluir}>
-                <ModalBody>Confirma a exclusão de {aluno.nomeAluno}?</ModalBody>
-                <ModalFooter>
-                    <button className="btn btn-danger" onClick={requestDelete}>Sim</button>
-                    <button className="btn btn-secondary" onClick={abrirFecharModalExcluir}>Não</button>
-                </ModalFooter>
-            </Modal>
-
         </Container>
     );
 };
 
-export default EditarAlunos;
+export default CriarAlunos;
